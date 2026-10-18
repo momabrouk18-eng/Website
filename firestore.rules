@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// Who can read and write what in the database.
+//
+//  - Nobody can read anything without signing in.
+//  - New accounts wait as "pending" until an admin approves them.
+//    Invited people with a verified email (e.g. Google sign-in) get in straight away.
+//  - Approved members can read, add and edit all team data.
+//  - Only admins can delete data, approve people, change roles and send invites.
+//  - The very first account ever created becomes the admin.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function myEmail() { return request.auth.token.email.lower(); }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function myRole() {
+      return signedIn() && exists(userPath(request.auth.uid))
+        ? get(userPath(request.auth.uid)).data.role
+        : 'none';
+    }
+    function isMember() { return myRole() in ['admin', 'member']; }
+    function isAdmin() { return myRole() == 'admin'; }
+
+    // Team data: every collection except the protected ones below.
+    // (Written as an exclusion list so new pages don't need new rules.)
+    function teamCollection(col) {
+      return !(col in ['users', 'invites', 'meta', 'settings']);
+    }
+    match /{col}/{id} {
+      allow read, create, update: if teamCollection(col) && isMember();
+      allow delete: if teamCollection(col) && isAdmin();
+    }
+
+    // Shared settings (company, exchange rates…)
+    match /settings/workspace {
+      allow read, create, update: if isMember();
+      allow delete: if isAdmin();
+    }
+
+    // Records who the first admin was. Can be written once, never changed.
+    match /meta/bootstrap {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Invitations, one per email address
+    match /invites/{inviteEmail} {
+      allow read: if isAdmin() || (signedIn() && inviteEmail == myEmail());
+      allow create, update: if isAdmin() && request.resource.data.role in ['admin', 'member'];
+      allow delete: if isAdmin();
+    }
+
+    // People
+    match /users/{uid} {
+      allow read: if isMember() || (signedIn() && request.auth.uid == uid);
+
+      // Anyone signing in for the first time creates their own record.
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.email == myEmail()
+        && (
+          request.resource.data.role == 'pending'
+          || (request.resource.data.role == 'admin'
+              && getAfter(/databases/$(database)/documents/meta/bootstrap).data.uid == request.auth.uid)
+          || (request.resource.data.role in ['admin', 'member']
+              && request.auth.token.email_verified == true
+              && exists(/databases/$(database)/documents/invites/$(myEmail()))
+              && get(/databases/$(database)/documents/invites/$(myEmail())).data.role == request.resource.data.role)
+        );
+
+      // People can edit their own name and preferences, never their own role.
+      // Admins can change anyone's role, but not their own (so there is always an admin).
+      allow update: if (request.auth.uid == uid
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.email == resource.data.email)
+                    || (isAdmin() && request.auth.uid != uid
+                        && request.resource.data.role in ['admin', 'member', 'pending', 'disabled']);
+
+      allow delete: if isAdmin() && request.auth.uid != uid;
+    }
+  }
+}

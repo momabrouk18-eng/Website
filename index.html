@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sourcing Desk</title>
+  <meta name="description" content="Supplier, sourcing and product opportunity workspace.">
+  <link rel="icon" href="/img/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    // Apply the saved theme before anything paints, so there is no flash.
+    try {
+      var theme = localStorage.getItem('sd.theme') || 'auto';
+      if (theme !== 'auto') document.documentElement.dataset.theme = theme;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- Shown while Firebase checks who is signed in, and for login / sign-up -->
+  <div id="gate" class="gate">
+    <div class="gate-loading"><img src="/img/icon.svg" width="40" height="40" alt=""><p>Loading Sourcing Desk…</p></div>
+  </div>
+
+  <!-- The app itself, shown once a team member is signed in -->
+  <div class="shell" id="shell" hidden>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation" data-lenis-prevent>
+      <div class="brand">
+        <img src="/img/icon.svg" alt="" width="28" height="28">
+        <div>
+          <strong>Sourcing Desk</strong>
+          <span id="brand-sub">Supplier &amp; BD workspace</span>
+        </div>
+      </div>
+      <nav id="nav"></nav>
+      <div class="sidebar-foot">
+        <div class="me" id="me"></div>
+        <button class="linklike" data-go="#/settings">Settings &amp; backup</button>
+        <button class="linklike" id="sign-out">Sign out</button>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="content">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open menu">
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input id="global-search" type="search" placeholder="Search suppliers, products, notes…  ( / )" autocomplete="off" aria-label="Search everything">
+          <div class="search-results" id="search-results" hidden data-lenis-prevent></div>
+        </div>
+        <div class="topbar-clocks" id="mini-clocks" aria-live="off"></div>
+      </header>
+      <main id="main" tabindex="-1"></main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+  <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
