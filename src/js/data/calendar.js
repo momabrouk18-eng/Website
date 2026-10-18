@@ -5,5 +5,5 @@ export const EVENT_TYPES = {
   plan: { label: 'Planning', tone: 'brass' },
   eg: { label: 'Egypt holiday', tone: 'jade' },
   tr: { label: 'Türkiye holiday', tone: 'jade' },
-  custom: { label: 'My event', tone: '' }
+  custom: { label: 'Team event', tone: '' }
 };
