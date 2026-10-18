@@ -91,8 +91,15 @@ async function route(refresh = false) {
     const title = main.querySelector('h1')?.textContent || main.querySelector('[aria-label]')?.getAttribute('aria-label');
     document.title = title ? `${title} – Sourcing Desk` : 'Sourcing Desk';
     if (!refresh) reveal(main);
+    try { sessionStorage.removeItem('sd.reloaded'); } catch {}
   } catch (e) {
     console.error(e);
+    // A new version was published while this tab was open: its old files are gone. Reload once.
+    if (/dynamically imported module|Importing a module script failed|error loading dynamically imported/i.test(e.message || '')) {
+      let tried = false;
+      try { tried = sessionStorage.getItem('sd.reloaded') === '1'; sessionStorage.setItem('sd.reloaded', '1'); } catch {}
+      if (!tried) { location.reload(); return; }
+    }
     $('#main').innerHTML = `<div class="empty"><h3>This page didn’t load</h3><p>${esc(e.message)}</p><a class="btn" href="#/">Go to dashboard</a></div>`;
   }
 }
