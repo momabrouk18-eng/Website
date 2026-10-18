@@ -100,9 +100,14 @@ export function explain(err) {
     'auth/popup-blocked': 'The browser blocked the Google window. Allow pop-ups for this site and try again.',
     'auth/unauthorized-domain': 'Google sign-in isn’t allowed on this address yet. Add it in Firebase → Authentication → Settings → Authorized domains, or use email and password.',
     'auth/operation-not-allowed': 'This sign-in method is switched off in Firebase → Authentication → Sign-in method.',
+    'auth/configuration-not-found': 'Sign-in isn’t set up yet. In Firebase, open Authentication → Get started and turn on Email/Password and Google.',
+    'auth/admin-restricted-operation': 'Creating accounts is switched off in Firebase → Authentication → Settings → User actions.',
+    'auth/api-key-not-valid': 'The site’s Firebase settings are wrong. Register a web app in Firebase → Project settings.',
+    'not-found': 'The database doesn’t exist yet. In Firebase, open Firestore Database → Create database.',
+    'failed-precondition': 'The database isn’t ready yet. In Firebase, open Firestore Database → Create database.',
     'auth/network-request-failed': 'No connection. Check the internet and try again.',
-    'permission-denied': 'You don’t have permission to do that.',
+    'permission-denied': 'The database refused this. If the site was just set up, publish firestore.rules in Firebase → Firestore Database → Rules.',
     'unavailable': 'The database can’t be reached right now. Changes will sync when you’re back online.'
   };
-  return map[code] || 'Something went wrong. Try again.';
+  return map[code] || `Something went wrong (${code || 'unknown error'}). Try again.`;
 }
