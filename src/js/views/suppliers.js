@@ -66,7 +66,7 @@ export function logInteraction(supplierId) {
   openForm({
     title: `Log contact — ${s.name}`, fields, submitLabel: 'Save to log',
     onSubmit: d => {
-      const log = [{ id: Math.random().toString(36).slice(2, 10), date: d.date, channel: d.channel, summary: d.summary }, ...(s.log || [])];
+      const log = [{ id: Math.random().toString(36).slice(2, 10), date: d.date, channel: d.channel, summary: d.summary, by: store.settings().name }, ...(s.log || [])];
       store.update('suppliers', s.id, { log, lastContact: d.date > (s.lastContact || '') ? d.date : s.lastContact, nextFollowUp: d.next || '' });
       toast('Logged');
     }
@@ -162,7 +162,7 @@ function detail(main, id) {
       <div class="panel">
         <div class="panel-head"><div><h2>Contact log</h2><p>${(s.log || []).length === 1 ? "1 entry" : `${(s.log || []).length} entries`}</p></div>
           ${s.nextFollowUp ? `<span class="pill ${dueClass(s.nextFollowUp) === 'late' ? 'seal' : 'jade'}">Follow up ${relDay(s.nextFollowUp).toLowerCase()}</span>` : ''}</div>
-        ${(s.log || []).length ? `<ul class="log">${s.log.map(l => `<li><div class="log-head"><b>${fdate(l.date)}</b>${pill(l.channel || 'Note')}<button class="icon-btn" style="margin-left:auto" data-dellog="${l.id}" aria-label="Delete entry">✕</button></div><p>${esc(l.summary)}</p></li>`).join('')}</ul>`
+        ${(s.log || []).length ? `<ul class="log">${s.log.map(l => `<li><div class="log-head"><b>${fdate(l.date)}</b>${pill(l.channel || 'Note')}${l.by ? `<span>${esc(l.by)}</span>` : ''}${store.canDelete() ? `<button class="icon-btn" style="margin-left:auto" data-dellog="${l.id}" aria-label="Delete entry">✕</button>` : ''}</div><p>${esc(l.summary)}</p></li>`).join('')}</ul>`
           : emptyState('No contact logged yet', 'Log each call, WeChat or email here so you always know where things stand.')}
       </div>
       <div class="panel">
@@ -186,6 +186,7 @@ function detail(main, id) {
           <dt>Category</dt><dd>${esc(s.category || '—')}</dd>
           <dt>Products</dt><dd>${esc(s.products || '—')}</dd>
           <dt>Certifications</dt><dd>${esc(s.certs || '—')}</dd>
+          <dt>Added by</dt><dd>${esc(s.createdByName || '—')}${s.updatedByName ? ` <span class="muted">· last edit ${esc(s.updatedByName)}</span>` : ''}</dd>
         </dl></div></div>
       <div class="panel"><div class="panel-head"><h2>Terms</h2></div><div class="panel-body">
         <dl class="facts">

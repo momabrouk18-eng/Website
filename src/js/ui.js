@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { pauseScroll } from './motion.js';
 
 export const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const $ = (sel, root = document) => root.querySelector(sel);
@@ -118,7 +119,7 @@ export function modal({ title, body, foot = '', wide = false, onMount }) {
   lastFocus = document.activeElement;
   const root = $('#modal-root');
   root.innerHTML = `
-    <div class="modal-back" data-close-back>
+    <div class="modal-back" data-close-back data-lenis-prevent>
       <div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-head"><h2 id="modal-title">${esc(title)}</h2>
           <button class="icon-btn" data-close aria-label="Close"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
@@ -127,6 +128,7 @@ export function modal({ title, body, foot = '', wide = false, onMount }) {
         ${foot ? `<div class="modal-foot">${foot}</div>` : ''}
       </div>
     </div>`;
+  pauseScroll(true);
   const back = $('.modal-back', root);
   back.addEventListener('mousedown', e => { if (e.target === back) closeModal(); });
   $$('[data-close]', root).forEach(b => b.addEventListener('click', closeModal));
@@ -140,6 +142,7 @@ export function closeModal() {
   const root = $('#modal-root');
   if (root && root.innerHTML) {
     root.innerHTML = '';
+    pauseScroll(false);
     lastFocus && lastFocus.focus && lastFocus.focus();
   }
 }
@@ -234,6 +237,7 @@ export function readForm(root, fields) {
 }
 
 export function openForm({ title, fields, values = {}, onSubmit, onDelete, submitLabel = 'Save', wide = false }) {
+  if (onDelete && !store.canDelete()) onDelete = null; // only admins delete
   modal({
     title, wide,
     body: `<form id="modal-form" novalidate>${formHtml(fields, values)}</form>`,

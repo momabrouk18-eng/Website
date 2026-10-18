@@ -381,3 +381,39 @@ dl.facts dd { margin: 0; overflow-wrap: anywhere; }
   .panel { border-color: #bbb; break-inside: avoid; }
   .print-only { display: block; }
 }
+
+/* ---------- Sign-in gate ---------- */
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 32px 16px; }
+.gate-loading { text-align: center; color: var(--ink-3); }
+.gate-loading img { animation: breathe 1.6s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .45; } }
+.auth { width: 100%; max-width: 420px; }
+.auth-brand { display: flex; gap: 12px; align-items: center; margin-bottom: 22px; }
+.auth-brand strong { display: block; font-size: 1.15rem; }
+.auth-brand span { color: var(--ink-3); font-size: .9rem; }
+.auth .panel-body { padding: 22px; }
+.auth form { display: grid; gap: 14px; }
+.auth .btn { width: 100%; padding: 10px 14px; }
+.auth .divider { display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: .82rem; margin: 4px 0; }
+.auth .divider::before, .auth .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.auth .switch { text-align: center; font-size: .9rem; color: var(--ink-2); margin-top: 16px; }
+.auth .switch button, .auth .text-link { background: none; border: 0; padding: 0; font: inherit; color: var(--jade-ink); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.auth .error { background: var(--seal-soft); color: var(--seal); border-radius: var(--r-sm); padding: 9px 12px; font-size: .9rem; margin: 0; }
+.auth .ok { background: var(--jade-soft); color: var(--jade-ink); border-radius: var(--r-sm); padding: 9px 12px; font-size: .9rem; margin: 0; }
+.google-btn svg { flex: none; }
+
+.me { padding: 6px 10px 8px; font-size: .85rem; color: #fff; }
+.me small { display: block; color: var(--side-ink); opacity: .75; }
+
+/* ---------- Dashboard hero ---------- */
+.hero { position: relative; isolation: isolate; margin: -28px -28px 0; padding: 28px 28px 4px; }
+.hero-rays { position: absolute; inset: 0 0 auto 0; height: 340px; z-index: -1; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent); mask-image: linear-gradient(to bottom, #000 40%, transparent); }
+.hello h1 { min-height: 1.2em; }
+.hello h1 > span[aria-hidden] { white-space: pre; }
+.btn.star-border { padding: 8px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: .9rem; overflow: visible; }
+.star-slot { display: inline-flex; }
+
+@media (max-width: 860px) {
+  .hero { margin: -20px -16px 0; padding: 20px 16px 4px; }
+}

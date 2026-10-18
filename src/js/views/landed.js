@@ -116,7 +116,7 @@ function editor(main, id) {
   const n = (name, label, help = '', extra = '') => `<label class="field">${label}${help ? ` <small>${help}</small>` : ''}<input type="number" step="any" name="${name}" value="${esc(x[name])}" ${extra}></label>`;
 
   main.innerHTML = pageHead(existing ? (x.name || 'Landed cost') : 'New landed cost', '', `
-    ${existing ? '<button class="btn" id="dup">Duplicate</button><button class="btn danger" id="del">Delete</button>' : ''}
+    ${existing ? `<button class="btn" id="dup">Duplicate</button>${store.canDelete() ? '<button class="btn danger" id="del">Delete</button>' : ''}` : ''}
     <button class="btn" onclick="window.print()">Print</button><button class="btn primary" id="save">${existing ? 'Save changes' : 'Save calculation'}</button>`,
     '<a href="#/landed">Landed cost</a>') + `
   <form id="lc" class="grid side" autocomplete="off">

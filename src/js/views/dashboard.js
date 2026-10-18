@@ -4,19 +4,13 @@ import { CALENDAR, EVENT_TYPES } from '../data/calendar.js';
 import { STAGES } from './opportunities.js';
 import { taskRow, wireTaskList, editTask } from './tasks.js';
 import { logInteraction, newSupplier } from './suppliers.js';
+import { blurHeading, lightRays, countUp, starButton, unmountWithin } from '../islands.jsx';
 
 function greeting(h) {
   if (h < 5) return 'Working late';
   if (h < 12) return 'Good morning';
   if (h < 17) return 'Good afternoon';
   return 'Good evening';
-}
-
-function dailyMessage(list) {
-  if (!list?.length) return '';
-  const d = new Date();
-  const n = d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate();
-  return list[n % list.length];
 }
 
 function bridge() {
@@ -57,7 +51,7 @@ function bridge() {
   </section>`;
 }
 
-export function render(main) {
+function bodyHtml() {
   const s = store.settings();
   const today = todayISO();
   const me = zoneParts(s.homeTz || 'Africa/Cairo');
@@ -88,21 +82,9 @@ export function render(main) {
   const active = suppliers.filter(x => x.status === 'Active').length;
   const pipeline = STAGES.slice(0, 8).map(st => [st, opps.filter(o => o.stage === st).length]);
   const maxP = Math.max(1, ...pipeline.map(p => p[1]));
-  const msg = dailyMessage(s.messages);
   const fresh = !suppliers.length && !tasks.length && !store.all('landed').length;
 
-  main.innerHTML = `
-  <div class="hello">
-    <div><h1>${greeting(me.h)}, ${esc(s.name || 'there')}</h1><div class="date">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
-    <div class="quick no-print">
-      <button class="btn" id="q-task">New task</button>
-      <a class="btn" href="#/landed/new">Landed cost</a>
-      <a class="btn" href="#/rfqs">RFQs</a>
-      <a class="btn primary" href="#/templates">Write to a supplier</a>
-    </div>
-  </div>
-  ${bridge()}
-  ${msg ? `<div class="note-from mb"><img src="img/icon.svg" width="32" height="32" alt=""><div><p>${esc(msg)}</p><small>— ${esc(s.from || '')}</small></div></div>` : ''}
+  return `
   ${fresh ? `
   <div class="panel mb"><div class="panel-head"><div><h2>Getting set up</h2><p>Four steps and this workspace starts working for you.</p></div></div>
     <ul class="agenda">
@@ -128,12 +110,12 @@ export function render(main) {
     </div>
     <div class="stack">
       <div class="grid cols-3" style="gap:10px">
-        <a class="panel stat" href="#/suppliers" style="text-decoration:none;color:inherit"><b>${active}</b><span>Active suppliers</span></a>
-        <a class="panel stat ${openRfqs ? 'warn' : ''}" href="#/rfqs" style="text-decoration:none;color:inherit"><b>${openRfqs}</b><span>Open RFQs</span></a>
-        <a class="panel stat" href="#/samples" style="text-decoration:none;color:inherit"><b>${inTransit}</b><span>Samples on the way</span></a>
+        <a class="panel stat" href="#/suppliers" style="text-decoration:none;color:inherit"><b data-count="${active}">${active}</b><span>Active suppliers</span></a>
+        <a class="panel stat ${openRfqs ? 'warn' : ''}" href="#/rfqs" style="text-decoration:none;color:inherit"><b data-count="${openRfqs}">${openRfqs}</b><span>Open RFQs</span></a>
+        <a class="panel stat" href="#/samples" style="text-decoration:none;color:inherit"><b data-count="${inTransit}">${inTransit}</b><span>Samples on the way</span></a>
       </div>
       <div class="panel"><div class="panel-head"><h2>Coming up</h2><a class="btn sm ghost" href="#/calendar">Calendar</a></div>
-        ${cny ? `<div class="panel-body" style="border-bottom:1px solid var(--line)"><b>${daysBetween(today, cny.date)} days</b> until Chinese New Year holidays${cny.estimated ? ' <small class="muted">(estimated)</small>' : ''}.<br><small class="muted">Factories wind down earlier. Confirm pre-holiday orders early.</small></div>` : ''}
+        ${cny ? `<div class="panel-body" style="border-bottom:1px solid var(--line)"><b><span data-count="${daysBetween(today, cny.date)}">${daysBetween(today, cny.date)}</span> days</b> until Chinese New Year holidays${cny.estimated ? ' <small class="muted">(estimated)</small>' : ''}.<br><small class="muted">Factories wind down earlier. Confirm pre-holiday orders early.</small></div>` : ''}
         <ul class="agenda">${upcoming.map(e => `<li><span class="when">${fdate(e.date, { day: 'numeric', month: 'short' })}</span><span class="what"><span>${esc(e.title)}</span><small>${EVENT_TYPES[e.type]?.label || ''}${e.end && e.end !== e.date ? ` · until ${fdate(e.end, { day: 'numeric', month: 'short' })}` : ''}</small></span></li>`).join('')}</ul>
       </div>
       <div class="panel"><div class="panel-head"><h2>Exchange rates</h2><a class="btn sm ghost" href="#/tools">Convert</a></div><div class="panel-body">
@@ -142,16 +124,58 @@ export function render(main) {
       </div></div>
     </div>
   </div>`;
+}
 
+function heroHtml() {
+  const s = store.settings();
+  const me = zoneParts(s.homeTz || 'Africa/Cairo');
+  return `
+  <section class="hero">
+    <div class="hero-rays" id="hero-rays" aria-hidden="true"></div>
+    <div class="hello">
+      <div><h1 id="hello-title">${greeting(me.h)}, ${esc(s.name || 'there')}</h1><div class="date">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
+      <div class="quick no-print">
+        <button class="btn" id="q-task">New task</button>
+        <a class="btn" href="#/landed/new">Landed cost</a>
+        <a class="btn" href="#/rfqs">RFQs</a>
+        <span class="star-slot" id="cta-slot"><a class="btn primary" href="#/templates">Write to a supplier</a></span>
+      </div>
+    </div>
+    ${bridge()}
+  </section>`;
+}
+
+function wireBody(main, animate) {
+  const body = $('#dash-body', main);
+  $('#add-task', body).addEventListener('click', () => editTask());
+  $('#g-sup', body)?.addEventListener('click', () => newSupplier());
+  body.querySelectorAll('[data-log]').forEach(b => b.addEventListener('click', () => logInteraction(b.dataset.log)));
+  wireTaskList(body);
+  if (animate) body.querySelectorAll('[data-count]').forEach(el => countUp(el, Number(el.dataset.count)));
+}
+
+export function render(main) {
+  const s = store.settings();
+  const me = zoneParts(s.homeTz || 'Africa/Cairo');
+  main.innerHTML = heroHtml() + `<div id="dash-body">${bodyHtml()}</div>`;
   $('#q-task', main).addEventListener('click', () => editTask());
-  $('#add-task', main).addEventListener('click', () => editTask());
-  $('#g-sup', main)?.addEventListener('click', () => newSupplier());
-  main.querySelectorAll('[data-log]').forEach(b => b.addEventListener('click', () => logInteraction(b.dataset.log)));
-  wireTaskList(main);
+  blurHeading($('#hello-title', main), `${greeting(me.h)}, ${s.name || 'there'}`);
+  lightRays($('#hero-rays', main));
+  starButton($('#cta-slot', main), { href: '#/templates', label: 'Write to a supplier' });
+  wireBody(main, true);
 
   const timer = setInterval(() => {
     const b = $('.bridge', main);
     if (b) b.outerHTML = bridge();
   }, 60000);
   return () => clearInterval(timer);
+}
+
+// Data changed: update the lists and numbers, leave the header (and its animations) alone.
+export function refresh(main) {
+  const body = $('#dash-body', main);
+  if (!body) return render(main);
+  unmountWithin(body);
+  body.innerHTML = bodyHtml();
+  wireBody(main, false);
 }

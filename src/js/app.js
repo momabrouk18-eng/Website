@@ -1,4 +1,6 @@
-import { store } from './store.js';
+import { store, session, ROLES } from './store.js';
+import { reveal, scrollToTop } from './motion.js';
+import { unmountAll } from './islands.jsx';
 import { $, $$, esc, zoneParts, chinaStatus, todayISO, toast } from './ui.js';
 
 const I = {
@@ -40,6 +42,9 @@ const NAV = [
     { href: '#/templates', label: 'Message templates', icon: 'tpl', view: 'templates' },
     { href: '#/glossary', label: 'Glossary', icon: 'gloss', view: 'glossary' },
     { href: '#/notes', label: 'Notes', icon: 'notes', view: 'notes' }
+  ] },
+  { group: 'Workspace', items: [
+    { href: '#/team', label: 'Team', icon: 'supp', view: 'team', badge: () => session.isAdmin() ? store.users().filter(u => u.role === 'pending').length : 0 }
   ] }
 ];
 
@@ -59,46 +64,57 @@ function renderNav() {
 
 let cleanup = null;
 let renderToken = 0;
-async function route() {
+let currentView = null;
+const KNOWN = ['dashboard', 'tasks', 'suppliers', 'rfqs', 'samples', 'opportunities', 'market', 'landed', 'tools', 'calendar', 'templates', 'glossary', 'notes', 'team', 'settings'];
+
+// refresh = true when data changed underneath the same page (no scroll jump, no entrance animation)
+async function route(refresh = false) {
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
   const name = parts[0] || 'dashboard';
-  const known = ['dashboard', 'tasks', 'suppliers', 'rfqs', 'samples', 'opportunities', 'market', 'landed', 'tools', 'calendar', 'templates', 'glossary', 'notes', 'settings'];
-  const view = known.includes(name) ? name : 'dashboard';
+  const view = KNOWN.includes(name) ? name : 'dashboard';
   const token = ++renderToken;
   document.body.classList.remove('nav-open');
   renderNav();
   try {
     const mod = await import(`./views/${view}.js`);
     if (token !== renderToken) return;
-    if (typeof cleanup === 'function') cleanup();
     const main = $('#main');
+    if (refresh && mod.refresh && currentView === view) { mod.refresh(main, parts.slice(1)); return; }
+    if (typeof cleanup === 'function') cleanup();
+    unmountAll();
     main.innerHTML = '';
     main.removeAttribute('data-live');
-    cleanup = mod.render(main, parts.slice(1)) || null;
-    const title = main.querySelector('h1')?.textContent;
+    currentView = view;
+    cleanup = mod.render(main, parts.slice(1), { refresh }) || null;
+    const title = main.querySelector('h1')?.textContent || main.querySelector('[aria-label]')?.getAttribute('aria-label');
     document.title = title ? `${title} – Sourcing Desk` : 'Sourcing Desk';
+    if (!refresh) reveal(main);
   } catch (e) {
     console.error(e);
     $('#main').innerHTML = `<div class="empty"><h3>This page didn’t load</h3><p>${esc(e.message)}</p><a class="btn" href="#/">Go to dashboard</a></div>`;
   }
 }
 
-// Re-render the current view when data changes (debounced), unless the user is typing in a modal.
+// Re-render the current page when data changes (debounced), unless the user is typing in a dialog.
 let pending = false;
-store.on(() => {
+function onData() {
   renderNav();
+  renderMe();
   if (pending) return;
   pending = true;
   requestAnimationFrame(() => {
     pending = false;
     if (document.querySelector('#modal-root .modal')) return;
-    const main = $('#main');
-    if (main.dataset.live === 'off') return;
-    route();
+    if ($('#main').dataset.live === 'off') return;
+    route(true);
   });
-});
+}
 
-window.addEventListener('hashchange', () => { route(); window.scrollTo(0, 0); });
+function renderMe() {
+  const p = session.profile;
+  if (!p) return;
+  $('#me').innerHTML = `${esc(p.name || p.email)}<small>${esc(ROLES[p.role] || '')} · ${esc(p.email)}</small>`;
+}
 
 // ---------- mobile menu ----------
 $('#menu-btn').addEventListener('click', () => document.body.classList.toggle('nav-open'));
@@ -117,8 +133,7 @@ function tickClocks() {
   const homeLabel = (s.homeTz || 'Africa/Cairo').split('/').pop().replace(/_/g, ' ');
   $('#mini-clocks').innerHTML = `<span>${esc(homeLabel)} <b>${me.time}</b></span><span title="${esc(st.detail)}"><i class="dot ${st.key}"></i>China <b>${cn.time}</b></span>`;
 }
-tickClocks();
-setInterval(tickClocks, 30000);
+let started = false;
 
 // ---------- global search ----------
 const searchInput = $('#global-search');
@@ -186,6 +201,18 @@ async function refreshRates(force = false) {
   }
 }
 window.refreshRates = refreshRates;
-refreshRates();
 
-route();
+// Called once a team member is signed in and their data has loaded.
+export function startApp() {
+  $('#gate').hidden = true;
+  $('#shell').hidden = false;
+  renderMe();
+  if (started) { route(); return; }
+  started = true;
+  store.on(onData);
+  window.addEventListener('hashchange', () => { route(); scrollToTop(); });
+  tickClocks();
+  setInterval(tickClocks, 30000);
+  refreshRates();
+  route();
+}

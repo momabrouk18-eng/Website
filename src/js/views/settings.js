@@ -1,4 +1,4 @@
-import { store, COLLECTIONS } from '../store.js';
+import { store, COLLECTIONS, session } from '../store.js';
 import { $, $$, esc, num, fmt, opts, pageHead, toast, download, todayISO, fdate, openForm, confirmDialog, CURRENCIES } from '../ui.js';
 
 const ZONES = ['Africa/Cairo', 'Europe/Istanbul', 'Asia/Shanghai', 'Asia/Dubai', 'Europe/Vienna', 'Europe/London'];
@@ -19,18 +19,20 @@ export function render(main) {
   const hours = (a, b, la, lb) => `<label class="field">${la}<input type="time" name="${a}" value="${toTime(s[a])}"></label><label class="field">${lb}<input type="time" name="${b}" value="${toTime(s[b])}"></label>`;
   const counts = COLLECTIONS.filter(c => c !== 'countries').map(c => [c, store.all(c).length]).filter(([, n]) => n);
 
-  main.innerHTML = pageHead('Settings & backup', 'Make the workspace yours. Everything is stored in this browser only.') + `
+  main.innerHTML = pageHead('Settings & backup', 'Your personal preferences, and the settings the whole team shares.') + `
   <div class="grid cols-2">
     <div class="stack">
-      <form class="panel" id="prof"><div class="panel-head"><h2>You</h2></div><div class="panel-body form-grid">
+      <form class="panel" id="prof"><div class="panel-head"><div><h2>You</h2><p>Only for you</p></div></div><div class="panel-body form-grid">
         <label class="field">Your name<input name="name" value="${esc(s.name)}"></label>
-        <label class="field">Company<input name="company" value="${esc(s.company)}"></label>
         <label class="field">Your time zone<select name="homeTz">${opts(ZONES, s.homeTz)}</select></label>
+        <label class="field">Appearance<select name="theme">${opts([['auto', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']], s.theme)}</select></label>
+        <label class="field">Signed in as<input value="${esc(s.email)}" disabled></label>
+      </div><div class="panel-head" style="border-top:1px solid var(--line)"><div><h2>Workspace</h2><p>Shared with the whole team</p></div></div><div class="panel-body form-grid">
+        <label class="field">Company<input name="company" value="${esc(s.company)}"></label>
         <label class="field">Importing into by default<select name="homeCountry">${store.all('countries').map(c => `<option value="${c.id}" ${c.id === s.homeCountry ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
         <label class="field">Usual purchase currency<select name="buyCurrency">${opts(CURRENCIES, s.buyCurrency)}</select></label>
         <label class="field">Local currency<select name="homeCurrency">${opts(CURRENCIES, s.homeCurrency)}</select></label>
-        <label class="field">Appearance<select name="theme">${opts([['auto', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']], s.theme)}</select></label>
-      </div><div class="panel-head" style="border-top:1px solid var(--line)"><div><h2>Working hours</h2><p>Used for the time bridge on the dashboard</p></div></div><div class="panel-body form-grid">
+      </div><div class="panel-head" style="border-top:1px solid var(--line)"><div><h2>Working hours</h2><p>Your hours are personal; China hours are shared</p></div></div><div class="panel-body form-grid">
         ${hours('workStart', 'workEnd', 'My day starts', 'My day ends')}
         ${hours('factoryStart', 'factoryEnd', 'China office opens', 'China office closes')}
         ${hours('lunchStart', 'lunchEnd', 'China lunch starts', 'China lunch ends')}
@@ -51,17 +53,12 @@ export function render(main) {
         </tbody></table>
         <div class="panel-body"><p class="help">Duty depends on the exact HS code, so treat these as starting points and adjust per product in each calculation.</p></div></div>
 
-      <form class="panel" id="msgs"><div class="panel-head"><div><h2>Morning messages</h2><p>One shows on the dashboard each day</p></div></div><div class="panel-body form-grid">
-        <label class="field span-2">From<input name="from" value="${esc(s.from || '')}"></label>
-        <label class="field span-2">Messages <small>one per line</small><textarea name="messages" rows="8">${esc((s.messages || []).join('\n'))}</textarea></label>
-      </div><div class="panel-body" style="padding-top:0"><button class="btn primary">Save messages</button></div></form>
-
-      <div class="panel"><div class="panel-head"><div><h2>Backup</h2><p>Your data lives only in this browser</p></div></div><div class="panel-body">
+      <div class="panel"><div class="panel-head"><div><h2>Backup</h2><p>Everything is saved in the team database automatically</p></div></div><div class="panel-body">
         <p>${counts.length ? counts.map(([c, n]) => `${n} ${c}`).join(', ') : 'No data yet.'}</p>
-        <p class="help">Download a backup every week, and before clearing your browser or changing laptops. To move to another computer, download here and restore there.</p>
+        <p class="help">A backup file is an extra copy you keep yourself, e.g. once a month. ${session.isAdmin() ? 'Restoring adds the file’s records back into the database.' : 'Only admins can restore a backup or erase the workspace.'}</p>
         <div class="row mt"><button class="btn primary" id="exp">Download backup</button>
-          <label class="btn">Restore from backup<input type="file" id="imp" accept="application/json,.json" hidden></label>
-          <button class="btn danger" id="reset">Erase everything</button></div>
+          ${session.isAdmin() ? `<label class="btn">Restore from backup<input type="file" id="imp" accept="application/json,.json" hidden></label>
+          <button class="btn danger" id="reset">Erase everything</button>` : ''}</div>
       </div></div>
     </div>
   </div>`;
@@ -85,11 +82,6 @@ export function render(main) {
     toast('Rates saved');
   });
   $('#upd', main).addEventListener('click', async () => { await window.refreshRates(true); render(main); });
-  $('#msgs', main).addEventListener('submit', e => {
-    e.preventDefault();
-    store.setSettings({ from: e.target.elements.from.value.trim(), messages: e.target.elements.messages.value.split('\n').map(x => x.trim()).filter(Boolean) });
-    toast('Messages saved');
-  });
   const editCountry = id => {
     const c = id ? store.all('countries').find(x => x.id === id) : null;
     openForm({
@@ -107,25 +99,23 @@ export function render(main) {
 
   $('#exp', main).addEventListener('click', () => {
     download(`sourcing-desk-backup-${todayISO()}.json`, store.exportJSON());
-    store.setSettings({ lastBackup: new Date().toISOString() });
     toast('Backup downloaded');
   });
-  $('#imp', main).addEventListener('change', async e => {
+  $('#imp', main)?.addEventListener('change', async e => {
     const file = e.target.files[0];
     if (!file) return;
-    if (!(await confirmDialog('Restoring replaces everything currently in this browser with the backup.', 'Restore'))) return;
+    if (!(await confirmDialog('Records in the backup are written back into the team database. Records with the same ID are overwritten.', 'Restore'))) return;
     try {
-      store.importJSON(await file.text());
-      toast('Backup restored');
+      const n = await store.importJSON(await file.text());
+      toast(`Backup restored: ${n} records`);
       render(main);
     } catch (err) {
       toast(err.message || 'That file could not be read.', 'err');
     }
   });
-  $('#reset', main).addEventListener('click', async () => {
-    if (!(await confirmDialog('This deletes all suppliers, quotes, notes and settings from this browser. Download a backup first if you might need them.', 'Erase everything'))) return;
-    store.reset();
-    toast('Everything erased');
+  $('#reset', main)?.addEventListener('click', async () => {
+    if (!(await confirmDialog('This deletes all suppliers, quotes, notes and other records for the whole team. Download a backup first if you might need them.', 'Erase everything'))) return;
+    try { await store.reset(); toast('Everything erased'); } catch (err) { toast(err.message, 'err'); }
     render(main);
   });
 }

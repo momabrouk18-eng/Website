@@ -2,6 +2,7 @@ import { store } from '../store.js';
 import { $, $$, esc, num, fmt, money, pct, pill, stars, emptyState, openForm, pageHead, fdate, toast, supplierLink } from '../ui.js';
 import { compute } from './landed.js';
 import { taskRow, wireTaskList, editTask } from './tasks.js';
+import { countUp } from '../islands.jsx';
 
 export const STAGES = ['Idea', 'Research', 'Assessment', 'Presented', 'Approved', 'Sampling', 'Costing', 'Launch prep', 'Launched', 'Dropped'];
 const STAGE_TONE = { Idea: '', Research: 'sky', Assessment: 'sky', Presented: 'brass', Approved: 'jade', Sampling: 'jade', Costing: 'jade', 'Launch prep': 'jade', Launched: 'jade', Dropped: 'seal' };
@@ -61,8 +62,8 @@ function setStage(id, stage) {
   toast(`Moved to ${stage}`);
 }
 
-export function render(main, params) {
-  return params[0] ? detail(main, params[0]) : board(main);
+export function render(main, params, ctx = {}) {
+  return params[0] ? detail(main, params[0], ctx) : board(main);
 }
 
 let showDropped = false;
@@ -99,7 +100,7 @@ function board(main) {
   });
 }
 
-function detail(main, id) {
+function detail(main, id, ctx = {}) {
   const o = store.get('opportunities', id);
   if (!o) { main.innerHTML = emptyState('Opportunity not found', 'It may have been deleted.', '<a class="btn" href="#/opportunities">Back</a>'); return; }
   const n = oppNumbers(o);
@@ -117,9 +118,9 @@ function detail(main, id) {
     '<a href="#/opportunities">Opportunities</a>') + `
   <p class="print-only"><b>${esc(store.settings().company || '')}</b> · Opportunity assessment · ${fdate(new Date().toISOString())} · Prepared by ${esc(store.settings().name || '')}</p>
   <div class="grid cols-3 mb">
-    <div class="big-result ${tone}"><span>Gross margin</span><b>${n.margin === null ? '—' : pct(n.margin)}</b><span>${n.cost ? `Landed ${money(n.cost, home)} vs net ${money(n.net, home)}` : 'Add a target price and cost'}</span></div>
-    <div class="big-result"><span>Year-1 revenue (net)</span><b>${n.revenue ? money(n.revenue, home, 0) : '—'}</b><span>${o.volume ? `${fmt(o.volume, 0)} units` : 'Add expected volume'}</span></div>
-    <div class="big-result"><span>Assessment score</span><b>${n.score ? fmt(n.score, 1) + ' / 5' : '—'}</b><span>${n.profit ? `Gross profit ${money(n.profit, home, 0)}` : 'Rate the five criteria'}</span></div>
+    <div class="big-result ${tone}"><span>Gross margin</span><b ${n.margin !== null ? `data-count="${n.margin}" data-dec="1" data-suf="%"` : ''}>${n.margin === null ? '—' : pct(n.margin)}</b><span>${n.cost ? `Landed ${money(n.cost, home)} vs net ${money(n.net, home)}` : 'Add a target price and cost'}</span></div>
+    <div class="big-result"><span>Year-1 revenue (net)</span><b ${n.revenue ? `data-count="${Math.round(n.revenue)}" data-dec="0" data-suf=" ${home}"` : ''}>${n.revenue ? money(n.revenue, home, 0) : '—'}</b><span>${o.volume ? `${fmt(o.volume, 0)} units` : 'Add expected volume'}</span></div>
+    <div class="big-result"><span>Assessment score</span><b ${n.score ? `data-count="${n.score}" data-dec="1" data-suf=" / 5"` : ''}>${n.score ? fmt(n.score, 1) + ' / 5' : '—'}</b><span>${n.profit ? `Gross profit ${money(n.profit, home, 0)}` : 'Rate the five criteria'}</span></div>
   </div>
   <div class="grid side">
     <div class="stack">
@@ -146,6 +147,7 @@ function detail(main, id) {
     </div>
   </div>`;
 
+  if (!ctx.refresh) main.querySelectorAll('[data-count]').forEach(el => countUp(el, Number(el.dataset.count), { decimals: Number(el.dataset.dec), suffix: el.dataset.suf }));
   $('#edit', main).addEventListener('click', () => openForm({
     title: 'Edit opportunity', fields: FIELDS(), values: o, wide: true,
     onSubmit: d => {

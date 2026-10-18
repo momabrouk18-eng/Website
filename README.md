@@ -1,43 +1,57 @@
 # Sourcing Desk
 
-A workspace for a Supplier & Business Development Executive: suppliers in China, RFQs, landed cost, product opportunities, samples and market intel in one place.
+A team workspace for supplier sourcing and business development: suppliers in China, RFQs, landed cost, product opportunities, samples and market intel in one place.
 
-Hosted on Firebase Hosting (project `website-ed86c`). Plain HTML, CSS and JavaScript modules, no build step.
+- **Hosting:** Firebase Hosting (project `website-ed86c`)
+- **Accounts:** Firebase Authentication (email + password, Google)
+- **Database:** Cloud Firestore, shared by the team, live-synced
+- **Build:** Vite. Plain JavaScript pages, plus React for a few React Bits components
+- **Motion:** GSAP + ScrollTrigger, Lenis smooth scroll (driven by GSAP's ticker)
 
-## What's inside
+## Folders
 
-| Page | What it does |
+```
+index.html              page shell (sidebar, top bar, sign-in gate)
+src/
+  firebase-config.js    Firebase web config (optional on Hosting)
+  css/app.css           all styles
+  js/main.js            entry: connects Firebase, picks sign-in / waiting / app screen
+  js/auth.js            sign-in, sign-up, password reset, waiting-for-approval screens
+  js/app.js             navigation, search, clocks, exchange rates, page switching
+  js/store.js           data layer: live copy of the database, add / update / delete
+  js/backend/           firebase.js (real), local.js (browser-only, for testing)
+  js/motion.js          Lenis + GSAP ticker, scroll reveals, reduced-motion handling
+  js/islands.jsx        mounts React Bits components into the pages
+  js/ui.js              shared helpers: forms, dialogs, formatting
+  js/views/*.js         one file per page
+  js/data/*.js          calendar, glossary, message templates
+  reactbits/            BlurText, CountUp, StarBorder, LightRays (from React Bits)
+static/                 icon and 404 page, copied as-is
+firestore.rules         who can read and write what
+```
+
+## Roles
+
+| Role | Can |
 |---|---|
-| Dashboard | Today's follow-ups, tasks and deadlines, Cairo ↔ China time bridge, upcoming holidays and fairs |
-| Suppliers | Supplier records, terms, ratings, contact log, next follow-up |
-| RFQs & quotes | Line up supplier quotes and score them with adjustable weights |
-| Samples | Track samples from request to verdict, with courier tracking links |
-| Opportunities | Product pipeline from idea to launch, with a printable assessment |
-| Market intel | Competitor shelf prices over time, trends and news |
-| Landed cost | Full import cost per unit (Egypt, Türkiye or any country you add), margin and max negotiable price |
-| Calculators | Currency, CBM & container fit, margin/markup, price breaks, lead-time planner, units |
-| Calendar | China holidays, trade fairs, Egypt holidays, own events |
-| Message templates | English + Chinese supplier messages with fill-in fields |
-| Glossary | Incoterms, payment, quality, customs terms |
-| Notes | Meeting and call notes, linked to suppliers |
+| Admin | Everything, plus delete records, approve people, change roles, invite, restore backups |
+| Member | Read, add and edit everything |
+| Waiting for approval | Nothing until an admin approves |
+| Removed | Nothing |
 
-## Data
+The first account ever created becomes admin.
 
-Everything is saved in the browser (`localStorage`). Settings → Backup downloads a JSON file that can be restored on another computer.
-
-## Working on it
+## Commands
 
 ```
-public/
-  index.html        app shell
-  css/app.css       all styles
-  js/app.js         navigation, search, clocks, exchange rates
-  js/store.js       data storage and defaults
-  js/ui.js          shared helpers (forms, modal, formatting)
-  js/views/*.js     one file per page
-  js/data/*.js      calendar, glossary, templates
+npm install        once, to download packages
+npm run dev        run locally at http://localhost:5173 (needs src/firebase-config.js filled in)
+npm run build      build the site into dist/
+firebase deploy --only firestore:rules   publish the database rules
 ```
 
-Run locally: `firebase serve` or any static server in `public/`.
+Test without Firebase: `VITE_BACKEND=local npm run dev` (data stays in the browser).
 
-Branches: work on `dev` or a `feature/*` branch, open a pull request to `main`. Merging to `main` deploys live.
+## Workflow
+
+Work on a `feature/*` branch → pull request to `dev` (a preview link is posted on the PR) → pull request from `dev` to `main` → merging to `main` deploys live.
