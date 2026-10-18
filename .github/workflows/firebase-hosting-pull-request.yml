@@ -18,6 +18,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Newest holiday data (China announces next year's schedule each November)
+      - run: npm install lunar-javascript@latest --no-save
       - run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:

@@ -1,6 +1,7 @@
 import { store } from '../store.js';
 import { $, esc, fmt, money, relDay, dueClass, todayISO, addDays, daysBetween, fdate, zoneParts, zoneOffsetHours, chinaStatus, pill } from '../ui.js';
-import { CALENDAR, EVENT_TYPES } from '../data/calendar.js';
+import { EVENT_TYPES } from '../data/calendar.js';
+import { calendarEvents, nextChineseNewYear } from '../live/holidays.js';
 import { STAGES } from './opportunities.js';
 import { taskRow, wireTaskList, editTask } from './tasks.js';
 import { logInteraction, newSupplier } from './suppliers.js';
@@ -74,8 +75,8 @@ function bodyHtml() {
 
   // Calendar: what's next
   const custom = store.all('events').map(e => ({ ...e, type: e.type || 'custom' }));
-  const upcoming = [...CALENDAR, ...custom].filter(e => (e.end || e.date) >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
-  const cny = CALENDAR.find(e => e.title.startsWith('Spring Festival') && e.date >= today);
+  const upcoming = [...calendarEvents().filter(e => e.type !== 'tr'), ...custom].filter(e => (e.end || e.date) >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  const cny = nextChineseNewYear(today);
 
   const inTransit = samples.filter(x => ['Paid', 'Shipped'].includes(x.status)).length;
   const openRfqs = rfqs.filter(r => !['Awarded', 'Closed'].includes(r.status)).length;
@@ -116,11 +117,11 @@ function bodyHtml() {
       </div>
       <div class="panel"><div class="panel-head"><h2>Coming up</h2><a class="btn sm ghost" href="#/calendar">Calendar</a></div>
         ${cny ? `<div class="panel-body" style="border-bottom:1px solid var(--line)"><b><span data-count="${daysBetween(today, cny.date)}">${daysBetween(today, cny.date)}</span> days</b> until Chinese New Year holidays${cny.estimated ? ' <small class="muted">(estimated)</small>' : ''}.<br><small class="muted">Factories wind down earlier. Confirm pre-holiday orders early.</small></div>` : ''}
-        <ul class="agenda">${upcoming.map(e => `<li><span class="when">${fdate(e.date, { day: 'numeric', month: 'short' })}</span><span class="what"><span>${esc(e.title)}</span><small>${EVENT_TYPES[e.type]?.label || ''}${e.end && e.end !== e.date ? ` · until ${fdate(e.end, { day: 'numeric', month: 'short' })}` : ''}</small></span></li>`).join('')}</ul>
+        <ul class="agenda">${upcoming.map(e => `<li><span class="when">${fdate(e.date, { day: 'numeric', month: 'short' })}</span><span class="what"><span>${esc(e.title)}</span><small>${EVENT_TYPES[e.type]?.label || ''}${e.end && e.end !== e.date ? ` · until ${fdate(e.end, { day: 'numeric', month: 'short' })}` : ''}${e.typical ? ' · usual dates' : ''}</small></span></li>`).join('')}</ul>
       </div>
       <div class="panel"><div class="panel-head"><h2>Exchange rates</h2><a class="btn sm ghost" href="#/tools">Convert</a></div><div class="panel-body">
         ${['CNY', 'EGP', 'TRY', 'EUR'].map(c => `<div class="kv-row"><span>1 USD</span><span>${fmt(s.rates[c], c === 'EUR' ? 4 : 2)} ${c}</span></div>`).join('')}
-        <p class="help mt">${s.ratesUpdated ? `Updated ${fdate(s.ratesUpdated, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Default rates. Connect to the internet to update.'}</p>
+        <p class="help mt">${s.ratesUpdated ? `Market rates${s.ratesDate ? ` of ${fdate(s.ratesDate, { day: 'numeric', month: 'short' })}` : ''}, checked ${fdate(s.ratesUpdated, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${s.autoRates ? '' : ' · set by hand'}` : 'Fetching today’s rates…'}</p>
       </div></div>
     </div>
   </div>`;

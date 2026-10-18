@@ -1,8 +1,9 @@
 import { store } from '../store.js';
 import { $, $$, esc, pill, pageHead, fdate, todayISO, openForm, daysBetween } from '../ui.js';
-import { CALENDAR, EVENT_TYPES } from '../data/calendar.js';
+import { EVENT_TYPES } from '../data/calendar.js';
+import { calendarEvents } from '../live/holidays.js';
 
-let show = { cn: true, fair: true, plan: true, eg: true, custom: true };
+let show = { cn: true, fair: true, plan: true, eg: true, tr: false, custom: true };
 let past = false;
 
 const FIELDS = [
@@ -23,17 +24,17 @@ function editEvent(id) {
 
 export function render(main) {
   const today = todayISO();
-  const all = [...CALENDAR, ...store.all('events').map(e => ({ ...e, type: 'custom' }))]
+  const all = [...calendarEvents(), ...store.all('events').map(e => ({ ...e, type: 'custom' }))]
     .filter(e => show[e.type] !== false)
     .filter(e => past || (e.end || e.date) >= today)
     .sort((a, b) => a.date.localeCompare(b.date));
   const byMonth = {};
   all.forEach(e => { const k = e.date.slice(0, 7); (byMonth[k] = byMonth[k] || []).push(e); });
 
-  main.innerHTML = pageHead('Calendar', 'Chinese holidays that stop production, trade fairs worth visiting, Egyptian holidays and your own events. Dates marked estimated are not yet officially confirmed.',
+  main.innerHTML = pageHead('Calendar', 'Chinese, Egyptian and Turkish public holidays are calculated for every year automatically, using China’s official schedule once it is announced. Trade fairs show their usual dates. Your team’s own events are shared with everyone.',
     '<button class="btn primary" id="add">Add event</button>') + `
     <div class="toolbar">
-      ${Object.entries({ cn: 'China holidays', fair: 'Trade fairs', plan: 'Planning', eg: 'Egypt holidays', custom: 'My events' }).map(([k, l]) => `<label class="check"><input type="checkbox" data-k="${k}" ${show[k] ? 'checked' : ''}> ${l}</label>`).join('')}
+      ${Object.entries({ cn: 'China holidays', fair: 'Trade fairs', plan: 'Planning', eg: 'Egypt holidays', tr: 'Türkiye holidays', custom: 'Team events' }).map(([k, l]) => `<label class="check"><input type="checkbox" data-k="${k}" ${show[k] ? 'checked' : ''}> ${l}</label>`).join('')}
       <label class="check" style="margin-left:auto"><input type="checkbox" id="past" ${past ? 'checked' : ''}> Show past</label>
     </div>
     ${Object.keys(byMonth).map(m => `
@@ -44,11 +45,11 @@ export function render(main) {
         return `<li>
           <span class="when ${on ? 'today' : ''}">${fdate(e.date, { day: 'numeric', month: 'short' })}${e.end && e.end !== e.date ? `<br>– ${fdate(e.end, { day: 'numeric', month: 'short' })}` : ''}</span>
           <span class="what"><span class="strong">${e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a>` : esc(e.title)}</span>
-            <small>${on ? 'Happening now' : d > 0 ? `In ${d} days` : ''}${e.estimated ? ' · estimated' : ''}${e.note ? ` · ${esc(e.note)}` : ''}</small></span>
+            <small>${on ? 'Happening now' : d > 0 ? `In ${d} days` : ''}${e.typical ? ' · usual dates, confirm' : e.estimated ? ' · estimated' : e.source === 'official' ? ' · official' : ''}${e.note ? ` · ${esc(e.note)}` : ''}</small></span>
           ${pill(EVENT_TYPES[e.type]?.label || '', EVENT_TYPES[e.type]?.tone || '')}
           ${e.type === 'custom' ? `<button class="btn sm ghost" data-e="${e.id}">Edit</button>` : ''}
         </li>`;
-      }).join('')}</ul></div>`).join('') || '<div class="panel"><p class="empty">Nothing to show with these filters.</p></div>'}`;
+      }).join('')}</ul></div>`).join('') || (calendarEvents().length ? '<div class="panel"><p class="empty">Nothing to show with these filters.</p></div>' : '<div class="panel"><p class="empty">Loading holidays…</p></div>')}`;
 
   $$('[data-k]', main).forEach(c => c.addEventListener('change', () => { show[c.dataset.k] = c.checked; render(main); }));
   $('#past', main).addEventListener('change', e => { past = e.target.checked; render(main); });

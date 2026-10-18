@@ -1,0 +1,27 @@
+# Rebuilds and redeploys the live site every Monday, so the holiday calendar picks up
+# China's newly announced official schedule without anyone having to push a change.
+name: Weekly data refresh
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install lunar-javascript@latest --no-save
+      - run: npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WEBSITE_ED86C }}
+          channelId: live
+          projectId: website-ed86c

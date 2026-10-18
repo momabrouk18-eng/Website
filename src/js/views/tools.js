@@ -1,6 +1,6 @@
 import { store } from '../store.js';
 import { $, $$, esc, num, fmt, money, pct, convert, CURRENCIES, opts, pageHead, todayISO, addDays, fdate, daysBetween } from '../ui.js';
-import { CALENDAR } from '../data/calendar.js';
+import { calendarEvents } from '../live/holidays.js';
 
 const TOOLS = [
   ['fx', 'Currency'],
@@ -45,14 +45,15 @@ const bind = (box, st, draw) => {
 
 function fx(box) {
   const st = state.fx;
-  const r = store.settings().rates;
+  const s0 = store.settings();
+  const r = s0.rates;
   box.innerHTML = `<div class="grid side"><div class="panel"><div class="panel-body form-grid">
       ${field('amount', 'Amount', st.amount)}
       <label class="field">From<select name="from">${opts(CURRENCIES, st.from)}</select></label>
     </div><div class="panel-body flush"><table class="data" id="fx-out"></table></div></div>
     <div class="panel"><div class="panel-head"><h2>Rates used</h2><button class="btn sm" id="upd">Update now</button></div><div class="panel-body">
       ${CURRENCIES.filter(c => c !== 'USD').map(c => `<div class="kv-row"><span>1 USD</span><span>${fmt(r[c], 4)} ${c}</span></div>`).join('')}
-      <p class="help mt">Indicative market rates. Customs and banks may use a different rate on the day. You can type your own rates in <a href="#/settings">Settings</a>.</p></div></div></div>`;
+      <p class="help mt">${s0.ratesUpdated ? `Daily market rates${s0.ratesDate ? ` of ${fdate(s0.ratesDate)}` : ''} from ${esc(s0.ratesSource || 'the rate service')}, refreshed every hour.` : 'Fetching today’s rates…'} Egyptian customs and banks may use a slightly different rate on the day. To use your own rates, turn off automatic updates in <a href="#/settings">Settings</a>.</p></div></div></div>`;
   bind(box, st, () => {
     $('#fx-out', box).innerHTML = `<tbody>${CURRENCIES.filter(c => c !== st.from).map(c => `<tr><td>${c}</td><td class="num strong">${fmt(convert(st.amount, st.from, c), 2)}</td><td class="num muted">1 ${st.from} = ${fmt(convert(1, st.from, c), 4)} ${c}</td></tr>`).join('')}</tbody>`;
   });
@@ -171,7 +172,7 @@ function lead(box) {
     // Production pauses over Chinese New Year if it overlaps.
     const prodStart = d;
     let prodEnd = addDays(d, num(st.prod));
-    const cny = CALENDAR.find(e => e.title.startsWith('Spring Festival') && e.end >= prodStart && e.date <= prodEnd);
+    const cny = calendarEvents().find(e => e.type === 'cn' && e.title.startsWith('Spring Festival') && e.end >= prodStart && e.date <= prodEnd);
     let pause = 0;
     if (cny) { pause = daysBetween(addDays(cny.date, -10), addDays(cny.end, 10)); prodEnd = addDays(prodEnd, pause); }
     steps.push({ label: `Production${pause ? ` (+${pause} days CNY pause)` : ''}`, from: prodStart, to: prodEnd });

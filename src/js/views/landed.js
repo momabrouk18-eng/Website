@@ -138,7 +138,7 @@ function editor(main, id) {
       </div></div>
 
       <div class="panel"><div class="panel-head"><div><h2>Duties &amp; taxes</h2><p id="country-note"></p></div></div><div class="panel-body form-grid" data-hide="DDP">
-        ${n('duty', 'Customs duty', '% of CIF')}
+        ${n('duty', 'Customs duty', '% of CIF, from the HS code')}
         ${n('extraDuty', 'Additional duty', '% of CIF')}
         ${n('specialTax', 'Special consumption tax', '% after duty')}
         ${n('vat', 'VAT', '%')}
@@ -181,6 +181,9 @@ function editor(main, id) {
     const c = country(d.country);
     $$('[data-home]', main).forEach(e => (e.textContent = r.home));
     $('#country-note', main).textContent = c.note || '';
+    const dutyBox = form.elements.duty;
+    dutyBox.placeholder = 'Enter for this product';
+    dutyBox.style.borderColor = d.incoterm !== 'DDP' && d.duty === '' ? 'var(--brass)' : '';
     $$('[data-show]', form).forEach(e => (e.hidden = !e.dataset.show.split(',').includes(d.incoterm)));
     $$('[data-hide]', form).forEach(e => (e.hidden = e.dataset.hide.split(',').includes(d.incoterm)));
     $('#ship-hint', main).textContent = {
@@ -192,6 +195,7 @@ function editor(main, id) {
     const total = r.total || 1;
     const row = (k, v, cls = '') => v ? `<div class="kv-row ${cls}"><span>${k}</span><span>${money(v, r.home)}</span></div>` : '';
     $('#out', main).innerHTML = `
+      ${d.incoterm !== 'DDP' && d.duty === '' ? '<p class="warn-box mb">Customs duty isn’t entered yet, so the cost below leaves it out. Enter the rate for this product’s HS code.</p>' : ''}
       <div class="big-result"><span>Landed cost per unit</span><b>${money(r.perUnit, r.home, 2)}</b><span>${money(r.perUnitUSD, 'USD', 2)} · ${fmt(r.qty, 0)} units</span></div>
       <div class="stackbar mt" aria-hidden="true">${r.parts.map(p => `<span style="width:${p.v / total * 100}%;background:${p.color}" title="${p.key}"></span>`).join('')}</div>
       <div class="bar-legend">${r.parts.map(p => `<span><i style="background:${p.color}"></i>${p.key} ${p.v / total < 0.01 ? '<1' : fmt(p.v / total * 100, 0)}%</span>`).join('')}</div>
@@ -219,7 +223,7 @@ function editor(main, id) {
   form.addEventListener('change', e => {
     if (e.target.name === 'country') {
       const c = country(e.target.value);
-      ['duty', 'extraDuty', 'specialTax', 'vat'].forEach(k => (form.elements[k].value = c[k] ?? 0));
+      ['duty', 'extraDuty', 'specialTax', 'vat'].forEach(k => (form.elements[k].value = c[k] ?? ''));
       form.elements.vatRecoverable.checked = !!c.vatRecoverable;
     }
     draw();

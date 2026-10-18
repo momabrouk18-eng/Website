@@ -417,3 +417,4 @@ dl.facts dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 860px) {
   .hero { margin: -20px -16px 0; padding: 20px 16px 4px; }
 }
+.warn-box { background: var(--brass-soft); color: var(--brass); border-radius: var(--r-sm); padding: 9px 12px; font-size: .85rem; font-weight: 600; margin-top: 0; }

@@ -9,13 +9,13 @@ export const ROLES = { admin: 'Admin', member: 'Member', pending: 'Waiting for a
 export const DEFAULT_COUNTRIES = [
   {
     id: 'eg', name: 'Egypt', currency: 'EGP', builtIn: true,
-    duty: 20, extraDuty: 0, specialTax: 0, vat: 14, vatRecoverable: true,
-    note: 'Duty rates depend on the HS code. VAT 14% is charged on CIF value plus duty. Shipments need an ACID number (ACI / Nafeza) before loading.'
+    duty: '', extraDuty: 0, specialTax: 0, vat: 14, vatRecoverable: true,
+    note: 'Customs duty depends on the product’s HS code (0–60% of CIF for most goods), so enter it for each product. VAT 14% is charged on CIF value plus duty. Shipments need an ACID number (ACI / Nafeza) before loading.'
   },
   {
     id: 'tr', name: 'Türkiye', currency: 'TRY', builtIn: true,
-    duty: 0, extraDuty: 0, specialTax: 0, vat: 20, vatRecoverable: true,
-    note: 'Customs duty and additional customs duty (İGV) depend on GTIP code and origin. Some electronics also carry ÖTV. KDV is 20% on most goods.'
+    duty: '', extraDuty: 0, specialTax: 0, vat: 20, vatRecoverable: true,
+    note: 'Customs duty and additional customs duty (İGV) depend on the GTIP code and origin, so enter them for each product. Some electronics also carry ÖTV. KDV is 20% on most goods.'
   }
 ];
 
@@ -25,7 +25,8 @@ const DEFAULT_WORKSPACE = {
   homeCountry: 'eg',
   homeCurrency: 'EGP',
   buyCurrency: 'USD',
-  rates: { USD: 1, CNY: 7.1, EGP: 48.5, TRY: 41.5, EUR: 0.86 },
+  // Fallback only, replaced by live rates within seconds of opening the site (market rates of 17 Oct 2026).
+  rates: { USD: 1, CNY: 6.687, EGP: 53.16, TRY: 49.58, EUR: 0.8898 },
   ratesUpdated: null,
   autoRates: true,
   factoryStart: 8.5, factoryEnd: 17.5, lunchStart: 12, lunchEnd: 13.5

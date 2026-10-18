@@ -1,6 +1,8 @@
 import { store, session, ROLES } from './store.js';
 import { reveal, scrollToTop } from './motion.js';
 import { unmountAll } from './islands.jsx';
+import { refreshRates, startRates } from './live/rates.js';
+import { loadHolidays, onHolidays } from './live/holidays.js';
 import { $, $$, esc, zoneParts, chinaStatus, todayISO, toast } from './ui.js';
 
 const I = {
@@ -182,24 +184,6 @@ document.addEventListener('keydown', e => {
   if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); searchInput.focus(); }
 });
 
-// ---------- exchange rates (free, no key) ----------
-async function refreshRates(force = false) {
-  const s = store.settings();
-  if (!s.autoRates && !force) return;
-  const age = s.ratesUpdated ? Date.now() - new Date(s.ratesUpdated).getTime() : Infinity;
-  if (!force && age < 6 * 3600 * 1000) return;
-  try {
-    const r = await fetch('https://open.er-api.com/v6/latest/USD');
-    const j = await r.json();
-    if (j.result !== 'success') throw new Error('Rate service unavailable');
-    const rates = { USD: 1 };
-    ['CNY', 'EGP', 'TRY', 'EUR'].forEach(c => { if (j.rates[c]) rates[c] = j.rates[c]; });
-    store.setSettings({ rates: { ...s.rates, ...rates }, ratesUpdated: new Date().toISOString() });
-    if (force) toast('Exchange rates updated');
-  } catch (e) {
-    if (force) toast('Couldn’t reach the rate service. Rates stay as they are; you can edit them in Settings.', 'err');
-  }
-}
 window.refreshRates = refreshRates;
 
 // Called once a team member is signed in and their data has loaded.
@@ -213,6 +197,8 @@ export function startApp() {
   window.addEventListener('hashchange', () => { route(); scrollToTop(); });
   tickClocks();
   setInterval(tickClocks, 30000);
-  refreshRates();
+  startRates();
+  loadHolidays().catch(console.error);
+  onHolidays(() => route(true));
   route();
 }

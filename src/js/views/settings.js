@@ -38,20 +38,20 @@ export function render(main) {
         ${hours('lunchStart', 'lunchEnd', 'China lunch starts', 'China lunch ends')}
       </div><div class="panel-body" style="padding-top:0"><button class="btn primary">Save</button></div></form>
 
-      <form class="panel" id="rates"><div class="panel-head"><div><h2>Exchange rates</h2><p>${s.ratesUpdated ? `Last updated ${fdate(s.ratesUpdated, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Not updated yet'}</p></div><button type="button" class="btn sm" id="upd">Update now</button></div>
+      <form class="panel" id="rates"><div class="panel-head"><div><h2>Exchange rates</h2><p>${s.ratesUpdated ? `${s.autoRates ? `Market rates${s.ratesDate ? ` of ${fdate(s.ratesDate)}` : ''} from ${esc(s.ratesSource || 'the rate service')}` : 'Set by hand'}, checked ${fdate(s.ratesUpdated, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Fetching today’s rates…'}</p></div><button type="button" class="btn sm" id="upd">Update now</button></div>
         <div class="panel-body form-grid">
           ${CURRENCIES.filter(c => c !== 'USD').map(c => `<label class="field">1 USD in ${c}<input type="number" step="any" name="${c}" value="${esc(s.rates[c])}"></label>`).join('')}
           <label class="check span-2"><input type="checkbox" name="autoRates" ${s.autoRates ? 'checked' : ''}> Update rates automatically from the internet</label>
-          <p class="help span-2">Turn this off to keep the rates finance gives you. Changes apply to all calculators.</p>
+          <p class="help span-2">When on, rates refresh every hour for the whole team and anything typed above is replaced. Turn it off to use the rates finance gives you.</p>
         </div><div class="panel-body" style="padding-top:0"><button class="btn primary">Save rates</button></div></form>
     </div>
 
     <div class="stack">
       <div class="panel"><div class="panel-head"><div><h2>Import countries</h2><p>Default duties and taxes for the landed cost calculator</p></div><button class="btn sm" id="add-c">Add country</button></div>
-        <table class="data"><thead><tr><th>Country</th><th class="num">Duty</th><th class="num">Add. duty</th><th class="num">Special tax</th><th class="num">VAT</th><th></th></tr></thead><tbody>
-        ${store.all('countries').map(c => `<tr><td><b>${esc(c.name)}</b> <span class="muted">${esc(c.currency)}</span></td><td class="num">${fmt(c.duty, 1)}%</td><td class="num">${fmt(c.extraDuty, 1)}%</td><td class="num">${fmt(c.specialTax, 1)}%</td><td class="num">${fmt(c.vat, 0)}%</td><td><button class="btn sm ghost" data-c="${c.id}">Edit</button></td></tr>`).join('')}
+        <table class="data"><thead><tr><th>Country</th><th class="num">Default duty</th><th class="num">Add. duty</th><th class="num">Special tax</th><th class="num">VAT</th><th></th></tr></thead><tbody>
+        ${store.all('countries').map(c => `<tr><td><b>${esc(c.name)}</b> <span class="muted">${esc(c.currency)}</span></td><td class="num">${c.duty === '' || c.duty === undefined ? '<span class="muted">per product</span>' : fmt(c.duty, 1) + '%'}</td><td class="num">${fmt(c.extraDuty, 1)}%</td><td class="num">${fmt(c.specialTax, 1)}%</td><td class="num">${fmt(c.vat, 0)}%</td><td><button class="btn sm ghost" data-c="${c.id}">Edit</button></td></tr>`).join('')}
         </tbody></table>
-        <div class="panel-body"><p class="help">Duty depends on the exact HS code, so treat these as starting points and adjust per product in each calculation.</p></div></div>
+        <div class="panel-body"><p class="help">VAT rates checked 18 Oct 2026: Egypt 14%, Türkiye 20%. Customs duty depends on each product’s HS code, so it is entered per calculation.</p></div></div>
 
       <div class="panel"><div class="panel-head"><div><h2>Backup</h2><p>Everything is saved in the team database automatically</p></div></div><div class="panel-body">
         <p>${counts.length ? counts.map(([c, n]) => `${n} ${c}`).join(', ') : 'No data yet.'}</p>
@@ -87,7 +87,8 @@ export function render(main) {
     openForm({
       title: c ? `Edit ${c.name}` : 'Add country', fields: COUNTRY_FIELDS, values: c || { currency: 'USD', vatRecoverable: true },
       onSubmit: d => {
-        ['duty', 'extraDuty', 'specialTax', 'vat'].forEach(k => (d[k] = num(d[k])));
+        ['extraDuty', 'specialTax', 'vat'].forEach(k => (d[k] = num(d[k])));
+        d.duty = d.duty === '' ? '' : num(d.duty);
         if (c) store.update('countries', c.id, d); else store.add('countries', d);
         render(main);
       },
