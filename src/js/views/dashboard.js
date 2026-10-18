@@ -4,6 +4,7 @@ import { EVENT_TYPES } from '../data/calendar.js';
 import { calendarEvents, nextChineseNewYear } from '../live/holidays.js';
 import { STAGES } from './opportunities.js';
 import { taskRow, wireTaskList, editTask } from './tasks.js';
+import { orderAlerts } from './orders.js';
 import { logInteraction, newSupplier } from './suppliers.js';
 import { blurHeading, lightRays, countUp, starButton, unmountWithin } from '../islands.jsx';
 
@@ -68,6 +69,7 @@ function bodyHtml() {
   samples.filter(x => !['Approved', 'Rejected', 'Received', 'Testing'].includes(x.status) && x.eta && x.eta <= addDays(today, 2)).forEach(x => items.push({ date: x.eta, html: `<a href="#/samples">Sample arriving: ${esc(x.product)}</a><small>${esc([x.courier, x.tracking].filter(Boolean).join(' '))}</small>` }));
   rfqs.filter(r => r.deadline && !['Awarded', 'Closed'].includes(r.status) && r.deadline <= addDays(today, 3)).forEach(r => items.push({ date: r.deadline, html: `<a href="#/rfqs/${r.id}">Quotes due: ${esc(r.product)}</a><small>${(r.quotes || []).length} received so far</small>` }));
   opps.filter(o => o.decisionDate && !['Launched', 'Dropped'].includes(o.stage) && o.decisionDate <= addDays(today, 7)).forEach(o => items.push({ date: o.decisionDate, html: `<a href="#/opportunities/${o.id}">Decision due: ${esc(o.name)}</a><small>${esc(o.stage)}</small>` }));
+  store.all('orders').forEach(o => orderAlerts(o, today).forEach(a => items.push({ date: a.date, html: `<a href="#/orders/${o.id}">${esc(a.text)}: ${esc(o.po)}</a><small>${esc([store.get('suppliers', o.supplierId)?.name, o.product].filter(Boolean).join(' · '))}</small>` })));
   items.sort((a, b) => a.date.localeCompare(b.date));
 
   const dueTasks = tasks.filter(t => !t.done && t.due && t.due <= today).sort((a, b) => a.due.localeCompare(b.due));
@@ -79,6 +81,7 @@ function bodyHtml() {
   const cny = nextChineseNewYear(today);
 
   const inTransit = samples.filter(x => ['Paid', 'Shipped'].includes(x.status)).length;
+  const openOrders = store.all('orders').filter(o => !o.cancelled && o.stage !== 'warehouse').length;
   const openRfqs = rfqs.filter(r => !['Awarded', 'Closed'].includes(r.status)).length;
   const active = suppliers.filter(x => x.status === 'Active').length;
   const pipeline = STAGES.slice(0, 8).map(st => [st, opps.filter(o => o.stage === st).length]);
@@ -110,10 +113,11 @@ function bodyHtml() {
       </div></div>
     </div>
     <div class="stack">
-      <div class="grid cols-3" style="gap:10px">
+      <div class="grid cols-2" style="gap:10px">
         <a class="panel stat" href="#/suppliers" style="text-decoration:none;color:inherit"><b data-count="${active}">${active}</b><span>Active suppliers</span></a>
         <a class="panel stat ${openRfqs ? 'warn' : ''}" href="#/rfqs" style="text-decoration:none;color:inherit"><b data-count="${openRfqs}">${openRfqs}</b><span>Open RFQs</span></a>
         <a class="panel stat" href="#/samples" style="text-decoration:none;color:inherit"><b data-count="${inTransit}">${inTransit}</b><span>Samples on the way</span></a>
+        <a class="panel stat" href="#/orders" style="text-decoration:none;color:inherit"><b data-count="${openOrders}">${openOrders}</b><span>Orders in progress</span></a>
       </div>
       <div class="panel"><div class="panel-head"><h2>Coming up</h2><a class="btn sm ghost" href="#/calendar">Calendar</a></div>
         ${cny ? `<div class="panel-body" style="border-bottom:1px solid var(--line)"><b><span data-count="${daysBetween(today, cny.date)}">${daysBetween(today, cny.date)}</span> days</b> until Chinese New Year holidays${cny.estimated ? ' <small class="muted">(estimated)</small>' : ''}.<br><small class="muted">Factories wind down earlier. Confirm pre-holiday orders early.</small></div>` : ''}

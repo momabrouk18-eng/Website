@@ -23,10 +23,10 @@ service cloud.firestore {
     function isMember() { return myRole() in ['admin', 'member']; }
     function isAdmin() { return myRole() == 'admin'; }
 
-    // Team data
+    // Team data: every collection except the protected ones below.
+    // (Written as an exclusion list so new pages don't need new rules.)
     function teamCollection(col) {
-      return col in ['suppliers', 'rfqs', 'landed', 'opportunities', 'samples', 'market',
-                     'tasks', 'notes', 'events', 'templates', 'countries'];
+      return !(col in ['users', 'invites', 'meta', 'settings']);
     }
     match /{col}/{id} {
       allow read, create, update: if teamCollection(col) && isMember();

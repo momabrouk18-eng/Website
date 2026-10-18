@@ -418,3 +418,25 @@ dl.facts dd { margin: 0; overflow-wrap: anywhere; }
   .hero { margin: -20px -16px 0; padding: 20px 16px 4px; }
 }
 .warn-box { background: var(--brass-soft); color: var(--brass); border-radius: var(--r-sm); padding: 9px 12px; font-size: .85rem; font-weight: 600; margin-top: 0; }
+
+/* ---------- Order stage tracker ---------- */
+.stepper { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 0; counter-reset: s; }
+.stepper li { position: relative; }
+.stepper li::before { content: ''; position: absolute; top: 15px; left: -50%; right: 50%; height: 2px; background: var(--line-2); }
+.stepper li:first-child::before { display: none; }
+.stepper li.done::before, .stepper li.now::before { background: var(--jade); }
+.stepper button { position: relative; width: 100%; background: none; border: 0; font: inherit; color: var(--ink-3); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 4px; cursor: pointer; text-align: center; }
+.stepper button:disabled { cursor: default; }
+.stepper button:not(:disabled):hover .dot-step { border-color: var(--jade); color: var(--jade-ink); }
+.stepper .dot-step { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line-2); font-size: .82rem; font-weight: 700; }
+.stepper li.done .dot-step { background: var(--jade); border-color: var(--jade); color: #fff; }
+.stepper li.now .dot-step { border-color: var(--jade); color: var(--jade-ink); box-shadow: 0 0 0 4px var(--jade-soft); }
+.stepper b { font-size: .8rem; font-weight: 600; color: var(--ink-2); line-height: 1.25; }
+.stepper li.now b, .stepper li.done b { color: var(--ink); }
+.stepper small { font-size: .74rem; color: var(--ink-3); min-height: 1em; }
+@media (max-width: 860px) {
+  .stepper { grid-template-columns: 1fr; gap: 6px; }
+  .stepper li::before { display: none; }
+  .stepper button { flex-direction: row; text-align: left; gap: 10px; }
+  .stepper small { margin-left: auto; }
+}

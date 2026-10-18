@@ -99,7 +99,7 @@ function detail(main, id) {
   main.innerHTML = pageHead(r.product, `${pill(r.status || 'Draft', TONE[r.status])} ${esc([r.ref, r.qty ? `${fmt(r.qty, 0)} pcs` : '', r.incoterm, r.target ? `target ${money(r.target, r.targetCur)}` : '', r.deadline ? `quotes by ${fdate(r.deadline)}` : ''].filter(Boolean).join(' · '))}`,
     `<button class="btn" id="edit">Edit RFQ</button><button class="btn" id="email">Write RFQ email</button><button class="btn" onclick="window.print()">Print</button><button class="btn primary" id="addq">Add quote</button>`,
     '<a href="#/rfqs">RFQs</a>') + `
-    ${winner ? `<div class="note-from mb"><p><b>Awarded to ${esc(store.get('suppliers', winner.supplierId)?.name || 'supplier')}</b> at ${money(winner.price, winner.currency)} per unit.</p></div>` : ''}
+    ${winner ? `<div class="note-from mb"><p><b>Awarded to ${esc(store.get('suppliers', winner.supplierId)?.name || 'supplier')}</b> at ${money(winner.price, winner.currency)} per unit.</p>${store.all('orders').some(x => x.rfqId === id) ? `<a class="btn sm" style="margin-left:auto" href="#/orders/${store.all('orders').find(x => x.rfqId === id).id}">Open order</a>` : '<button class="btn sm primary" style="margin-left:auto" id="mk-order">Create order</button>'}</div>` : ''}
     <div class="panel mb">
       <div class="panel-head"><div><h2>Quote comparison</h2><p>Highest score first. Lowest price, shortest lead time and lowest MOQ score best.</p></div></div>
       <div class="table-wrap">${ranked.length ? `<table class="data"><thead><tr><th>#</th><th>Supplier</th><th class="num">Unit price</th><th class="num">vs target</th><th class="num">MOQ</th><th class="num">Lead time</th><th>Terms</th><th>Quality</th><th class="num">Score</th><th></th></tr></thead><tbody>
@@ -148,6 +148,10 @@ function detail(main, id) {
     }
   };
 
+  $('#mk-order', main)?.addEventListener('click', () => import('./orders.js').then(m => m.editOrder(null, {
+    rfqId: id, supplierId: winner.supplierId, product: r.product, qty: r.qty || winner.moq || '', unitPrice: winner.price, currency: winner.currency,
+    incoterm: winner.incoterm || r.incoterm || 'FOB', oppId: r.oppId || '', po: `PO-${new Date().getFullYear()}-`
+  })));
   $('#addq', main).addEventListener('click', () => editQuote());
   $('[data-addq]', main)?.addEventListener('click', () => editQuote());
   $$('[data-q]', main).forEach(b => b.addEventListener('click', () => editQuote(b.dataset.q)));

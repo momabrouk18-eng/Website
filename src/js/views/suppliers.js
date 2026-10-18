@@ -1,4 +1,5 @@
 import { store } from '../store.js';
+import { supplierOnTime, STAGES as ORDER_STAGES } from './orders.js';
 import { $, $$, esc, fmt, fdate, relDay, dueClass, stars, pill, emptyState, openForm, pageHead, todayISO, addDays, num, download, toCSV, money, confirmDialog, toast } from '../ui.js';
 
 export const STATUSES = ['Active', 'Prospect', 'Under evaluation', 'On hold', 'Not suitable'];
@@ -152,6 +153,8 @@ function detail(main, id) {
   const notes = store.all('notes').filter(n => n.supplierId === id);
   const tasks = store.all('tasks').filter(t => t.supplierId === id && !t.done);
   const opps = store.all('opportunities').filter(o => (o.suppliers || []).includes(id));
+  const orders = store.all('orders').filter(o => o.supplierId === id);
+  const ot = supplierOnTime(id);
   const link = v => v ? (/^https?:/.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v.replace(/^https?:\/\//, '').slice(0, 40))}</a>` : esc(v)) : '—';
 
   main.innerHTML = pageHead(s.name, `${s.nameCn ? `<span class="cn">${esc(s.nameCn)}</span> · ` : ''}${esc([s.type, s.city, s.country].filter(Boolean).join(' · '))}`,
@@ -171,6 +174,8 @@ function detail(main, id) {
           ${quotes.map(({ r, q }) => `<tr class="clickable" data-go="#/rfqs/${r.id}"><td>${esc(r.product)}</td><td class="num">${money(q.price, q.currency)}</td><td class="num">${esc(q.moq || '—')}</td><td class="num">${q.lead ? q.lead + ' d' : '—'}</td><td><small>${esc([q.incoterm, q.payment].filter(Boolean).join(' · '))}</small></td></tr>`).join('')}
         </tbody></table></div>` : `<div class="panel-body"><p class="help">Quotes you add to an RFQ for this supplier will appear here.</p></div>`}
       </div>
+      ${orders.length ? `<div class="panel"><div class="panel-head"><h2>Orders</h2>${ot ? `<span class="pill ${ot.pct >= 80 ? 'jade' : ot.pct >= 50 ? 'brass' : 'seal'}">${ot.onTime} of ${ot.total} on time</span>` : ''}</div><div class="table-wrap"><table class="data"><tbody>
+        ${orders.map(x => `<tr class="clickable" data-go="#/orders/${x.id}"><td class="strong">${esc(x.po)}</td><td>${esc(x.product || '')}</td><td>${pill(x.cancelled ? 'Cancelled' : (ORDER_STAGES.find(s => s.key === x.stage) || ORDER_STAGES[0]).label)}</td><td class="muted nowrap">${fdate(x.orderDate)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
       ${samples.length ? `<div class="panel"><div class="panel-head"><h2>Samples</h2></div><div class="table-wrap"><table class="data"><tbody>
         ${samples.map(x => `<tr class="clickable" data-go="#/samples"><td>${esc(x.product)}</td><td>${pill(x.status)}</td><td class="muted">${fdate(x.requested)}</td><td>${stars(x.score)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
       ${notes.length ? `<div class="panel"><div class="panel-head"><h2>Notes</h2></div><ul class="log">${notes.map(n => `<li><div class="log-head"><b>${fdate(n.date)}</b>${pill(n.type || 'Note')}</div><a href="#/notes/${n.id}"><b>${esc(n.title || 'Untitled')}</b></a></li>`).join('')}</ul></div>` : ''}
@@ -201,6 +206,7 @@ function detail(main, id) {
         <div class="kv-row"><span>Price</span>${stars(s.rPrice)}</div>
         <div class="kv-row"><span>Communication</span>${stars(s.rComm)}</div>
         <div class="kv-row"><span>On-time delivery</span>${stars(s.rDelivery)}</div>
+        ${ot ? `<div class="kv-row"><span>Shipped on time <small class="muted">from orders</small></span><b>${fmt(ot.pct, 0)}% <small class="muted">(${ot.onTime}/${ot.total})</small></b></div>` : ''}
       </div></div>
       ${tasks.length ? `<div class="panel"><div class="panel-head"><h2>Open tasks</h2></div><ul class="agenda">${tasks.map(t => `<li><span class="when ${dueClass(t.due)}">${t.due ? relDay(t.due) : ''}</span><span class="what"><a href="#/tasks">${esc(t.title)}</a></span></li>`).join('')}</ul></div>` : ''}
       ${opps.length ? `<div class="panel"><div class="panel-head"><h2>Linked opportunities</h2></div><ul class="agenda">${opps.map(o => `<li><span class="what"><a href="#/opportunities/${o.id}">${esc(o.name)}</a><small>${esc(o.stage)}</small></span></li>`).join('')}</ul></div>` : ''}

@@ -109,6 +109,7 @@ function detail(main, id, ctx = {}) {
   const tasks = store.all('tasks').filter(t => t.oppId === id);
   const rfqs = store.all('rfqs').filter(r => r.oppId === id);
   const samples = store.all('samples').filter(s => s.oppId === id);
+  const orders = store.all('orders').filter(x => x.oppId === id);
   const tone = n.margin === null ? '' : n.margin >= 25 ? 'good' : n.margin >= 10 ? 'warn' : 'bad';
 
   main.innerHTML = pageHead(o.name, `${pill(o.stage || 'Idea', STAGE_TONE[o.stage])} ${esc(o.category || '')}`,
@@ -140,9 +141,10 @@ function detail(main, id, ctx = {}) {
         <div class="kv-row"><span>Low risk</span>${stars(o.sRisk)}</div></div></div>
       <div class="panel"><div class="panel-head"><h2>Suppliers</h2></div><div class="panel-body">${(o.suppliers || []).length ? o.suppliers.map(sid => `<div class="kv-row"><span>${supplierLink(sid)}</span></div>`).join('') : '<p class="help">None linked yet.</p>'}
         ${n.landed ? `<p class="help mt">Cost from <a href="#/landed/${n.landed.id}">${esc(n.landed.name)}</a></p>` : ''}</div></div>
-      ${rfqs.length || samples.length ? `<div class="panel"><div class="panel-head"><h2>Linked work</h2></div><div class="panel-body">
+      ${rfqs.length || samples.length || orders.length ? `<div class="panel"><div class="panel-head"><h2>Linked work</h2></div><div class="panel-body">
         ${rfqs.map(r => `<div class="kv-row"><a href="#/rfqs/${r.id}">RFQ: ${esc(r.product)}</a>${pill(r.status || 'Draft')}</div>`).join('')}
-        ${samples.map(s => `<div class="kv-row"><a href="#/samples">Sample: ${esc(s.product)}</a>${pill(s.status)}</div>`).join('')}</div></div>` : ''}
+        ${samples.map(s => `<div class="kv-row"><a href="#/samples">Sample: ${esc(s.product)}</a>${pill(s.status)}</div>`).join('')}
+        ${orders.map(x => `<div class="kv-row"><a href="#/orders/${x.id}">Order: ${esc(x.po)}</a>${pill(x.cancelled ? 'Cancelled' : x.stage === 'warehouse' ? 'In warehouse' : 'In progress')}</div>`).join('')}</div></div>` : ''}
       <div class="panel"><div class="panel-head"><h2>Stage history</h2></div><ul class="log">${(o.history || []).slice().reverse().map(h => `<li><div class="log-head"><b>${esc(h.stage)}</b>${fdate(h.date)}</div></li>`).join('')}</ul></div>
     </div>
   </div>`;

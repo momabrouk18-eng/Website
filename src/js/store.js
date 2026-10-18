@@ -3,7 +3,7 @@
 // Writes go to Firestore; every signed-in teammate sees the change within a second.
 import { be } from './backend/index.js';
 
-export const COLLECTIONS = ['suppliers', 'rfqs', 'landed', 'opportunities', 'samples', 'market', 'tasks', 'notes', 'events', 'templates', 'countries'];
+export const COLLECTIONS = ['suppliers', 'rfqs', 'orders', 'landed', 'opportunities', 'samples', 'market', 'tasks', 'notes', 'events', 'templates', 'countries'];
 export const ROLES = { admin: 'Admin', member: 'Member', pending: 'Waiting for approval', disabled: 'Removed' };
 
 export const DEFAULT_COUNTRIES = [

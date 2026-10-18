@@ -3,6 +3,7 @@ import { reveal, scrollToTop } from './motion.js';
 import { unmountAll } from './islands.jsx';
 import { refreshRates, startRates } from './live/rates.js';
 import { loadHolidays, onHolidays } from './live/holidays.js';
+import { orderAlerts } from './views/orders.js';
 import { $, $$, esc, zoneParts, chinaStatus, todayISO, toast } from './ui.js';
 
 const I = {
@@ -10,6 +11,7 @@ const I = {
   tasks: '<path d="M4 5h12M4 10h12M4 15h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
   supp: '<circle cx="7" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 17c0-3 2.5-5 5-5s5 2 5 5M13 4a3 3 0 010 6M15 12c2 .6 3 2.5 3 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
   rfq: '<path d="M5 2h7l4 4v12H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 10h5M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  ship: '<path d="M2 13h16l-2 4H4z M5 13V8h7v5 M12 9h3l2 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
   sample: '<path d="M3 6l7-3 7 3v8l-7 3-7-3z M3 6l7 3 7-3M10 9v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
   opp: '<path d="M10 2a5 5 0 00-3 9v2h6v-2a5 5 0 00-3-9zM8 16h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
   market: '<path d="M3 16l4-5 3 3 6-8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -29,6 +31,7 @@ const NAV = [
   { group: 'Sourcing', items: [
     { href: '#/suppliers', label: 'Suppliers', icon: 'supp', view: 'suppliers', badge: () => store.all('suppliers').filter(s => s.nextFollowUp && s.nextFollowUp <= todayISO()).length },
     { href: '#/rfqs', label: 'RFQs & quotes', icon: 'rfq', view: 'rfqs' },
+    { href: '#/orders', label: 'Orders & shipments', icon: 'ship', view: 'orders', badge: () => store.all('orders').filter(o => orderAlerts(o).some(a => a.kind !== 'eta' && a.date <= todayISO())).length },
     { href: '#/samples', label: 'Samples', icon: 'sample', view: 'samples' }
   ] },
   { group: 'Products', items: [
@@ -67,7 +70,7 @@ function renderNav() {
 let cleanup = null;
 let renderToken = 0;
 let currentView = null;
-const KNOWN = ['dashboard', 'tasks', 'suppliers', 'rfqs', 'samples', 'opportunities', 'market', 'landed', 'tools', 'calendar', 'templates', 'glossary', 'notes', 'team', 'settings'];
+const KNOWN = ['dashboard', 'tasks', 'suppliers', 'rfqs', 'orders', 'samples', 'opportunities', 'market', 'landed', 'tools', 'calendar', 'templates', 'glossary', 'notes', 'team', 'settings'];
 
 // refresh = true when data changed underneath the same page (no scroll jump, no entrance animation)
 async function route(refresh = false) {
@@ -155,6 +158,7 @@ function searchAll(q) {
   const has = (...vals) => vals.some(v => String(v ?? '').toLowerCase().includes(q));
   store.all('suppliers').forEach(s => has(s.name, s.nameCn, s.products, s.contact, s.city, s.category, s.wechat) && add(s.name, 'Supplier', `#/suppliers/${s.id}`));
   store.all('opportunities').forEach(o => has(o.name, o.category, o.description) && add(o.name, 'Opportunity', `#/opportunities/${o.id}`));
+  store.all('orders').forEach(o => has(o.po, o.product, o.bl, o.acid, o.container) && add(`${o.po} · ${o.product || ''}`, 'Order', `#/orders/${o.id}`));
   store.all('rfqs').forEach(r => has(r.product, r.specs, r.ref) && add(r.product, 'RFQ', `#/rfqs/${r.id}`));
   store.all('landed').forEach(l => has(l.name) && add(l.name, 'Landed cost', `#/landed/${l.id}`));
   store.all('samples').forEach(s => has(s.product, s.tracking) && add(s.product, 'Sample', '#/samples'));
