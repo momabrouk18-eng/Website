@@ -1,0 +1,57 @@
+export const GLOSSARY = [
+  // Incoterms 2020
+  { term: 'EXW', full: 'Ex Works', group: 'Incoterms', def: 'Seller only makes goods available at their factory. Buyer pays and arranges everything: loading, export clearance, freight, insurance, import. Cheapest quote, most work for you.' },
+  { term: 'FCA', full: 'Free Carrier', group: 'Incoterms', def: 'Seller clears export and hands goods to the buyer’s carrier at a named place. Good replacement for EXW because the seller handles Chinese export clearance.' },
+  { term: 'FOB', full: 'Free On Board', group: 'Incoterms', def: 'Seller delivers goods loaded on the vessel at the named Chinese port (e.g. FOB Shenzhen) and clears export. Buyer pays ocean freight, insurance and import. The most common term for China sourcing.' },
+  { term: 'CFR', full: 'Cost and Freight', group: 'Incoterms', def: 'Like FOB, but seller also pays ocean freight to the destination port. Risk passes to buyer when loaded in China. Buyer arranges insurance.' },
+  { term: 'CIF', full: 'Cost, Insurance and Freight', group: 'Incoterms', def: 'Seller pays freight and minimum insurance to the destination port. Risk still passes at loading in China. Egyptian customs value is based on CIF.' },
+  { term: 'CPT / CIP', full: 'Carriage Paid To / Carriage and Insurance Paid To', group: 'Incoterms', def: 'Like CFR / CIF but for any transport mode, including air and multimodal.' },
+  { term: 'DAP', full: 'Delivered At Place', group: 'Incoterms', def: 'Seller delivers to a named place in the destination country, not unloaded. Buyer pays import duties and taxes.' },
+  { term: 'DPU', full: 'Delivered at Place Unloaded', group: 'Incoterms', def: 'Like DAP but seller also unloads the goods.' },
+  { term: 'DDP', full: 'Delivered Duty Paid', group: 'Incoterms', def: 'Seller does everything including import duties and taxes. Easiest for buyer, but rare for imports into Egypt and usually priced higher.' },
+
+  // Commercial
+  { term: 'MOQ', full: 'Minimum Order Quantity', group: 'Commercial', def: 'Smallest quantity a supplier will produce per order, model or colour. Often negotiable for a first order, sometimes with a higher unit price.' },
+  { term: 'Lead time', full: '', group: 'Commercial', def: 'Days from order confirmation (usually deposit received) to goods ready. Add transit time and customs to get arrival date.' },
+  { term: 'RFQ', full: 'Request for Quotation', group: 'Commercial', def: 'A formal request to several suppliers to quote the same specification, quantity and terms so offers can be compared fairly.' },
+  { term: 'RFI', full: 'Request for Information', group: 'Commercial', def: 'An early request to learn about a supplier’s capabilities before asking for prices.' },
+  { term: 'PI', full: 'Proforma Invoice', group: 'Commercial', def: 'Supplier’s preliminary invoice listing products, prices and terms. Used to pay the deposit and open documents.' },
+  { term: 'CI', full: 'Commercial Invoice', group: 'Commercial', def: 'The final invoice used for customs clearance. Values must match the PI and the bank transfer.' },
+  { term: 'PL', full: 'Packing List', group: 'Commercial', def: 'Lists cartons, quantities per carton, weights and dimensions. Needed for customs and for the forwarder.' },
+  { term: 'T/T', full: 'Telegraphic Transfer', group: 'Payment', def: 'Bank wire. Typical China terms are 30% deposit with order and 70% balance before shipment or against B/L copy.' },
+  { term: 'L/C', full: 'Letter of Credit', group: 'Payment', def: 'Bank guarantees payment once the supplier presents the agreed documents. Safer for both sides but has bank fees and paperwork.' },
+  { term: 'D/P', full: 'Documents against Payment', group: 'Payment', def: 'Buyer’s bank releases shipping documents only after the buyer pays.' },
+  { term: 'OA', full: 'Open Account', group: 'Payment', def: 'Pay after receiving goods, e.g. 60 days after B/L. Only offered to trusted, long-term customers.' },
+  { term: 'Landed cost', full: '', group: 'Commercial', def: 'Total cost of a product delivered to your warehouse: product price, freight, insurance, duties, taxes, clearance and local transport.' },
+  { term: 'Margin vs markup', full: '', group: 'Commercial', def: 'Margin = profit ÷ selling price. Markup = profit ÷ cost. A 25% margin equals a 33% markup.' },
+  { term: 'Price break', full: '', group: 'Commercial', def: 'Lower unit price at higher quantities, e.g. 1k pcs at $10, 5k pcs at $9.20.' },
+  { term: 'NRE / Tooling', full: 'Non-Recurring Engineering', group: 'Commercial', def: 'One-time cost for moulds, custom designs or software changes. Ask whether it is refundable after a certain volume.' },
+
+  // Product
+  { term: 'OEM', full: 'Original Equipment Manufacturer', group: 'Product', def: 'Factory produces your design or specification under your brand.' },
+  { term: 'ODM', full: 'Original Design Manufacturer', group: 'Product', def: 'Factory’s own existing design, customised and sold under your brand. Faster and cheaper than OEM.' },
+  { term: 'Private label', full: '', group: 'Product', def: 'A standard product with your logo and packaging. Minimal changes to the product itself.' },
+  { term: 'BOM', full: 'Bill of Materials', group: 'Product', def: 'Full list of components in a product. Useful for understanding cost changes (e.g. panel or chip prices).' },
+  { term: 'SKD / CKD', full: 'Semi / Completely Knocked Down', group: 'Product', def: 'Products shipped partly or fully disassembled for local assembly. Often attracts lower import duties.' },
+  { term: 'Golden sample', full: '', group: 'Quality', def: 'The approved sample that mass production must match. Keep one signed copy and give one to the inspector.' },
+  { term: 'PP sample', full: 'Pre-production sample', group: 'Quality', def: 'Sample made with mass-production materials and processes, checked before the full run starts.' },
+  { term: 'PSI', full: 'Pre-Shipment Inspection', group: 'Quality', def: 'Third-party check of finished goods before the balance payment, usually at 80–100% packed.' },
+  { term: 'AQL', full: 'Acceptable Quality Limit', group: 'Quality', def: 'Sampling standard for inspections. Common for electronics: critical 0, major 1.5 or 2.5, minor 4.0.' },
+  { term: 'DPI / DUPRO', full: 'During Production Inspection', group: 'Quality', def: 'Inspection when 20–60% of goods are produced, to catch problems early.' },
+  { term: 'CE / RoHS / FCC', full: '', group: 'Quality', def: 'Safety and environmental certifications. CE and RoHS for Europe and many other markets, FCC for the US. Ask for test reports, not just logos.' },
+
+  // Logistics & customs
+  { term: 'HS code', full: 'Harmonized System code', group: 'Customs', def: 'Product classification number used worldwide (first 6 digits). It sets the customs duty rate. Türkiye uses 12-digit GTIP codes.' },
+  { term: 'ACID', full: 'Advance Cargo Information Declaration', group: 'Customs', def: 'Egypt’s mandatory pre-registration of imports on the Nafeza platform. The ACID number must be obtained before the supplier ships and appear on shipping documents.' },
+  { term: 'Nafeza', full: '', group: 'Customs', def: 'Egypt’s national single window for foreign trade. Importers and foreign exporters register here for ACI/ACID.' },
+  { term: 'GOEIC', full: 'General Organization for Export and Import Control', group: 'Customs', def: 'Egyptian body that inspects imports and maintains the factory registration list required for many consumer goods.' },
+  { term: 'Certificate of Origin', full: 'CO', group: 'Customs', def: 'Proves where goods were made. Origin affects duty rates under trade agreements.' },
+  { term: 'B/L', full: 'Bill of Lading', group: 'Logistics', def: 'Ocean shipping document and title to the goods. Original B/L or telex release is needed to collect cargo.' },
+  { term: 'AWB', full: 'Air Waybill', group: 'Logistics', def: 'Air freight equivalent of the B/L.' },
+  { term: 'FCL / LCL', full: 'Full / Less than Container Load', group: 'Logistics', def: 'FCL: you book a whole container. LCL: your cartons share a container, charged per CBM.' },
+  { term: '20GP / 40GP / 40HQ', full: 'Container types', group: 'Logistics', def: 'Usable volume roughly 28 / 58 / 68 CBM. 40HQ is one foot taller, best for light, bulky electronics.' },
+  { term: 'CBM', full: 'Cubic metre', group: 'Logistics', def: 'Shipping volume. Carton L × W × H in cm ÷ 1,000,000.' },
+  { term: 'Chargeable weight', full: '', group: 'Logistics', def: 'Air and courier charge the higher of actual weight and volume weight (L × W × H cm ÷ 6000 for air, ÷ 5000 for express).' },
+  { term: 'Demurrage / Detention', full: '', group: 'Logistics', def: 'Daily charges when a container stays too long at the port (demurrage) or outside it (detention). Watch free days.' },
+  { term: 'Freight forwarder', full: '', group: 'Logistics', def: 'Company that books shipping, handles documents and often customs clearance on your behalf.' }
+];
